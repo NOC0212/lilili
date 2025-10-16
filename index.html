@@ -6,6 +6,7 @@
     <title>🔗 二進位編碼長連結生成器</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://chart.googleapis.com; font-src 'self'; connect-src 'self' https://chart.googleapis.com; object-src 'none'; media-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self';">
     <style>
+        /* CSS 樣式定義 */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
             max-width: 800px; 
@@ -117,7 +118,7 @@
         }
         .copy-btn:hover {
             background: #1e7e34;
-            transform: none; /* 移除通用 button 的 transform 避免過度動畫 */
+            transform: none; 
             box-shadow: none;
         }
         .stats {
@@ -163,7 +164,7 @@
             display: inline-block;
             width: auto;
         }
-        /* 新增：Toast 提示樣式 */
+        /* Toast 提示樣式 */
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -185,7 +186,7 @@
             visibility: visible;
             opacity: 1;
         }
-        /* 新增：QR Code 區塊樣式 */
+        /* QR Code 區塊樣式 */
         .qr-code-box {
             text-align: center; 
             margin: 20px 0; 
@@ -252,8 +253,8 @@
             <h3>ℹ️ 編碼原理</h3>
             <ul>
                 <li><strong>i = 0，I = 1</strong> 用於二進位編碼，將目標網址資訊直接儲存在 URL 路徑中。</li>
-                <li>此方法**無需外部資料庫**，但需要載入本頁面來執行解碼和跳轉（即中繼）。</li>
-                <li>程式已設定為使用**您當前的網址**作為域名，因此部署在 GitHub Pages 上即可運作。</li>
+                <li>此方法無需外部資料庫，但需要載入本頁面來執行解碼和跳轉（即中繼）。</li>
+                <li>程式已修正為使用**您當前的網址**作為域名，部署在 GitHub Pages 上即可運作。</li>
             </ul>
         </div>
     </div>
@@ -291,7 +292,6 @@
         function generateQrCode(url) {
             const size = '150x150';
             const chs = encodeURIComponent(url);
-            // 由於已部署到 HTTPS 網站，跨網域請求通常會成功
             return `https://chart.googleapis.com/chart?cht=qr&chs=${size}&chl=${chs}&chld=L|1`;
         }
 
@@ -334,7 +334,6 @@
         function encodeUrlWithTimestamp(url) {
             const now = Date.now();
             
-            // 將數據打包（永久連結）
             const data = {
                 url: url,
                 created: now,
@@ -401,13 +400,15 @@
                 // 2. 生成分段路徑
                 const segmentedPath = generateSegmentedPath(result.encoded);
                 
-                // 3. **** 核心修正：動態建構完整 URL ****
+                // 3. **** 動態建構完整 URL ****
                 // 獲取當前頁面的基礎 URL，這能確保使用 GitHub Pages 自己的域名
-                // 移除可能的檔案名稱 (例如 index.html)，確保路徑指向根目錄
-                let baseUrl = window.location.href.split('#')[0].split('?')[0]; // 移除錨點和參數
+                let baseUrl = window.location.href.split('#')[0].split('?')[0]; 
+                
+                // 移除可能的檔案名稱 (例如 index.html)
                 if (baseUrl.endsWith('index.html') || baseUrl.endsWith('index.htm')) {
                     baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
                 }
+                // 確保結尾有斜線
                 if (!baseUrl.endsWith('/')) {
                     baseUrl += '/';
                 }
@@ -450,7 +451,6 @@
             }
             
             try {
-                // 提取路徑部分
                 const url = new URL(input);
                 const path = url.pathname;
                 
@@ -459,10 +459,7 @@
                     return;
                 }
                 
-                // 提取編碼
                 const encoded = extractEncodedFromPath(path);
-                
-                // 解碼
                 const decoded = decodeFromiI(encoded);
                 
                 if (!decoded) {
@@ -477,7 +474,6 @@
                 document.getElementById('decodedStatus').textContent = '有效';
                 document.getElementById('decodedStatus').style.color = 'green';
                 
-                // 設定重定向按鈕
                 currentDecodedUrl = decoded.url;
                 document.getElementById('redirectBtn').style.display = 'inline-block';
                 
@@ -528,15 +524,12 @@
             // 只有當路徑很長，且不只是 / 或 /index.html 時才嘗試解碼
             if (urlPath && urlPath.length > 20 && urlPath !== '/' && !urlPath.endsWith('.html') && !urlPath.endsWith('.htm')) {
                 try {
-                    // 提取編碼
                     const encoded = extractEncodedFromPath(urlPath);
-                    
-                    // 解碼
                     const decoded = decodeFromiI(encoded);
                     
                     if (decoded && decoded.url) {
                         // 永久連結，直接跳轉
-                        window.location.replace(decoded.url); // 使用 replace 避免瀏覽器歷史記錄中包含中繼頁
+                        window.location.replace(decoded.url); 
                         return;
                     }
                 } catch (error) {
@@ -545,7 +538,7 @@
                         <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
                             <h1>❌ 連結無效</h1>
                             <p>抱歉，您造訪的長連結無效或已損壞。錯誤: ${error.message}</p>
-                            <button onclick="window.location.href='/'" style="padding: 10px 20px; margin-top: 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">返回首頁</button>
+                            <button onclick="window.location.href='/'" style="padding: 10px 20px; margin-top: 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">返回生成頁面</button>
                         </div>
                     `;
                 }
@@ -554,259 +547,3 @@
     </script>
 </body>
 </html>
-g) || [];
-            return chunks.map(chunk => {
-                return String.fromCharCode(parseInt(chunk, 2));
-            }).join('');
-        }
-
-        // 二進位轉 i/I 編碼
-        function binaryToiI(binary) {
-            return binary.split('').map(bit => bit === '0' ? 'i' : 'I').join('');
-        }
-
-        // i/I 編碼轉二進位
-        function iIToBinary(iIString) {
-            return iIString.split('').map(char => char === 'i' ? '0' : '1').join('');
-        }
-
-        // 數字轉二進位（固定長度）
-        function numberToBinary(num, length = 32) {
-            return num.toString(2).padStart(length, '0');
-        }
-
-        // 二進位轉數字
-        function binaryToNumber(binary) {
-            return parseInt(binary, 2);
-        }
-
-        // 編碼 URL 和時間戳（永久連結）
-        function encodeUrlWithTimestamp(url, days) {
-            const now = Date.now();
-            
-            // 將數據打包（永久連結）
-            const data = {
-                url: url,
-                created: now,
-                expires: null,
-                permanent: true
-            };
-            
-            const jsonData = JSON.stringify(data);
-            
-            // 轉換為二進位
-            const binary = stringToBinary(jsonData);
-            
-            // 轉換為 i/I 編碼
-            const encoded = binaryToiI(binary);
-            
-            return {
-                encoded: encoded,
-                data: data
-            };
-        }
-
-        // 解碼 i/I 字串
-        function decodeFromiI(iIString) {
-            try {
-                // 轉換為二進位
-                const binary = iIToBinary(iIString);
-                
-                // 轉換為字串
-                const jsonString = binaryToString(binary);
-                
-                // 解析 JSON
-                const data = JSON.parse(jsonString);
-                
-                return data;
-            } catch (error) {
-                console.error('解碼失敗:', error);
-                return null;
-            }
-        }
-
-        // 生成路徑分段（保持 URL 長度最大化）
-        function generateSegmentedPath(encoded) {
-            const segments = [];
-            const maxSegmentLength = 255; // URL 段最大長度
-            
-            for (let i = 0; i < encoded.length; i += maxSegmentLength) {
-                segments.push(encoded.substr(i, maxSegmentLength));
-            }
-            
-            return segments.join('/');
-        }
-
-        // 從分段路徑中提取編碼
-        function extractEncodedFromPath(path) {
-            return path.replace(/\//g, '');
-        }
-
-        // 表單提交處理
-        document.getElementById('linkForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const url = document.getElementById('url').value;
-            const days = parseInt(document.getElementById('days').value);
-            
-            if (!url) {
-                showError('請輸入有效的 URL');
-                return;
-            }
-            
-            try {
-                // 1. 編碼 URL
-                const result = encodeUrlWithTimestamp(url, days);
-                
-                // 2. 生成分段路徑
-                const segmentedPath = generateSegmentedPath(result.encoded);
-                
-                // 3. 建構完整 URL
-                const domain = 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.in';
-                const longUrl = `https://${domain}/${segmentedPath}`;
-                
-                // 4. 生成 QR Code
-                const qrCodeSrc = generateQrCode(longUrl);
-                document.getElementById('qrCodeImage').src = qrCodeSrc;
-                
-                // 5. 顯示結果
-                document.getElementById('targetUrl').textContent = url;
-                document.getElementById('longUrl').textContent = longUrl;
-                document.getElementById('linkStats').innerHTML = `
-                    <p>📅 建立時間: ${new Date(result.data.created).toLocaleString()}</p>
-                    <p>⏰ 失效時間: 永久有效</p>
-                    <p>🔗 連結長度: ${longUrl.length} 字元</p>
-                    <p>📊 編碼長度: ${result.encoded.length} 字元</p>
-                    <p>💾 原始數據: ${JSON.stringify(result.data).length} 位元組</p>
-                `;
-                
-                document.getElementById('result').style.display = 'block';
-                document.getElementById('error').style.display = 'none';
-                
-                // 儲存目前 URL 用於複製
-                window.currentLongUrl = longUrl;
-                
-            } catch (error) {
-                showError('編碼失敗: ' + error.message);
-            }
-        });
-
-        // 解碼長連結
-        function decodeLongUrl() {
-            const input = document.getElementById('decodeUrl').value.trim();
-            
-            if (!input) {
-                showToast('請輸入要解碼的長連結'); // 使用 Toast
-                return;
-            }
-            
-            try {
-                // 提取路徑部分
-                const url = new URL(input);
-                const path = url.pathname.substring(1); // 移除開頭的 /
-                
-                if (!path) {
-                    showToast('無效的 URL 路徑'); // 使用 Toast
-                    return;
-                }
-                
-                // 提取編碼
-                const encoded = extractEncodedFromPath(path);
-                
-                // 解碼
-                const decoded = decodeFromiI(encoded);
-                
-                if (!decoded) {
-                    showToast('解碼失敗，可能是無效的編碼'); // 使用 Toast
-                    return;
-                }
-                
-                // 顯示結果（永久連結）
-                document.getElementById('decodedUrl').textContent = decoded.url;
-                document.getElementById('decodedCreated').textContent = new Date(decoded.created).toLocaleString();
-                document.getElementById('decodedExpires').textContent = '永久有效';
-                document.getElementById('decodedStatus').textContent = '有效';
-                document.getElementById('decodedStatus').style.color = 'green';
-                
-                // 設定重定向按鈕
-                currentDecodedUrl = decoded.url;
-                document.getElementById('redirectBtn').style.display = 'inline-block';
-                
-                document.getElementById('decodeResult').style.display = 'block';
-                
-            } catch (error) {
-                showToast('解碼失敗: ' + error.message); // 使用 Toast
-                console.error('解碼錯誤:', error);
-            }
-        }
-
-        // 重定向到目標 URL
-        function redirectToTarget() {
-            if (currentDecodedUrl) {
-                window.open(currentDecodedUrl, '_blank');
-            }
-        }
-
-        // 複製到剪貼簿 (使用 Toast 提示)
-        function copyToClipboard() {
-            if (window.currentLongUrl) {
-                navigator.clipboard.writeText(window.currentLongUrl).then(function() {
-                    showToast('長連結已複製！');
-                }).catch(function() {
-                    // 降級方案
-                    const textArea = document.createElement('textarea');
-                    textArea.value = window.currentLongUrl;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showToast('長連結已複製！ (降級模式)');
-                });
-            }
-        }
-
-        // 顯示錯誤
-        function showError(message) {
-            document.getElementById('error').textContent = message;
-            document.getElementById('error').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-        }
-
-        // 頁面載入時的自動解碼和跳轉功能
-        window.addEventListener('load', function() {
-            const currentUrl = window.location.href;
-            const urlPath = window.location.pathname;
-            
-            // 如果目前頁面 URL 包含編碼路徑，自動解碼並跳轉
-            if (urlPath && urlPath !== '/' && urlPath.length > 10) {
-                try {
-                    // 提取路徑部分
-                    const path = urlPath.substring(1); // 移除開頭的 /
-                    
-                    // 提取編碼
-                    const encoded = extractEncodedFromPath(path);
-                    
-                    // 解碼
-                    const decoded = decodeFromiI(encoded);
-                    
-                    if (decoded && decoded.url) {
-                        // 永久連結，直接跳轉
-                        window.location.href = decoded.url;
-                        return;
-                    }
-                } catch (error) {
-                    // 解碼失敗，顯示 404 頁面
-                    document.body.innerHTML = `
-                        <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-                            <h1>❌ 連結無效</h1>
-                            <p>抱歉，您造訪的連結無效或已損壞。</p>
-                            <button onclick="window.location.href='/'" style="padding: 10px 20px; margin-top: 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">生成新連結</button>
-                        </div>
-                    `;
-                }
-            }
-        });
-    </script>
-</body>
-</html>
-
