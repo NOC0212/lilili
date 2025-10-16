@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二進位編碼長連結生成器</title>
+    <link rel="icon" href="https://q2.qlogo.cn/headimg_dl?dst_uin=2726730791&spec=5">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://chart.googleapis.com; font-src 'self'; connect-src 'self' https://chart.googleapis.com; object-src 'none'; media-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self';">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 25px; /* 增加間距 */
+        }
+        h1 { 
+            color: #667eea; 
+            text-align: center; 
+            margin-bottom: 35px; /* 增加間距 */
+            font-size: 2.2em; /* 調整大小 */
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 35px;
+            margin-bottom: 20px;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: #555;
+        }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e1e1e1; 
+            border-radius: 8px; 
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #667eea; 
+        }
+        button { 
+            background: linear-gradient(45deg, #667eea, #764ba2); 
+            color: white; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.3s; /* 新增陰影過渡 */
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); /* 懸停陰影 */
+        }
+        .info {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+            border-left: 4px solid #667eea;
+            line-height: 1.6;
+        }
+        .result {
+            background: #e8f5e8;
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            display: none;
+        }
+        .result h3 {
+            color: #28a745;
+            margin-top: 0;
+        }
+        .url-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            word-break: break-all;
+            border: 2px solid #e9ecef;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 150px; /* 限制高度 */
+            overflow-y: auto;
+            line-height: 1.5; /* 增加行高，提升長字串可讀性 */
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: auto; /* 恢復自動寬度 */
+            display: inline-block;
+        }
+        .stats {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        .decode-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 25px;
+        }
+        .decode-result {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        .redirect-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
+            width: auto; /* 恢復自動寬度 */
+        }
+        /* 新增：Toast 提示樣式 */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 10;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* 新增：QR Code 區塊樣式 */
+        .qr-code-box {
+            text-align: center; 
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px dashed #e1e1e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .qr-code-box img {
+            max-width: 150px; 
+            height: auto; 
+            border: 4px solid #f8f9fa; 
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 二進位編碼長連結生成器</h1>
+        <form id="linkForm">
+            <div class="form-group">
+                <label for="url">目標網址:</label>
+                <input type="url" id="url" name="url" required placeholder="https://example.com" />
+            </div>
+            <div class="form-group">
+                <label for="days">失效時間:</label>
+                <select id="days" name="days">
+                    <option value="0">永久</option>
+                </select>
+            </div>
+            <button type="submit">生成長連結</button>
+        </form>
+        
+        <div id="error" class="error"></div>
+        
+        <div id="result" class="result">
+            <h3>✅ 長連結生成成功！</h3>
+            
+            <p><strong>目標網址:</strong></p>
+            <div id="targetUrl" class="url-box"></div>
+            
+            <p><strong>生成的長連結:</strong></p>
+            <div id="longUrl" class="url-box"></div>
+
+            <div class="qr-code-box">
+                <h4>二維碼 (QR Code)</h4>
+                <img id="qrCodeImage" alt="長連結的 QR Code" />
+                <button class="copy-btn" onclick="copyToClipboard()">複製連結</button>
+            </div>
+            
+            <div id="linkStats" class="stats"></div>
+        </div>
+        
+        <div class="info">
+            <h3>ℹ️ 編碼原理</h3>
+            <ul>
+                <li><strong>i = 0，I = 1</strong> 用於二進位編碼，實現無伺服器儲存。</li>
+                <li>目標 URL 會被編碼為二進位，然後轉換為 i/I 字串。</li>
+                <li>所有連結均為永久有效，**連結越長，包含的原始資訊越多**。</li>
+                <li>此長連結可以直接在任何支援長 URL 的瀏覽器上解碼並跳轉。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="decode-section">
+        <h2>🔍 解碼長連結</h2>
+        <div class="form-group">
+            <label for="decodeUrl">輸入長連結進行解碼:</label>
+            <input type="text" id="decodeUrl" placeholder="https://domain.com/iiIiIiiIIiiiI..." />
+        </div>
+        <button onclick="decodeLongUrl()">解碼連結</button>
+        
+        <div id="decodeResult" class="decode-result">
+            <h4>解碼結果:</h4>
+            <p><strong>目標 URL:</strong> <span id="decodedUrl"></span></p>
+            <p><strong>建立時間:</strong> <span id="decodedCreated"></span></p>
+            <p><strong>失效時間:</strong> <span id="decodedExpires"></span></p>
+            <p><strong>狀態:</strong> <span id="decodedStatus"></span></p>
+            <button id="redirectBtn" class="redirect-btn" onclick="redirectToTarget()" style="display: none;">造訪目標網址</button>
+        </div>
+    </div>
+
+    <div class="container" style="text-align: center; margin-top: 20px;">
+        <p style="color: #666; font-size: 14px;">
+            by cy.noc0531
+        </p>
+    </div>
+    
+    <div id="toast">連結已複製到剪貼簿！</div>
+
+    <script>
+        let currentDecodedUrl = '';
+
+        // 函式：生成 QR Code (使用 Google Charts API)
+        function generateQrCode(url) {
+            const size = '150x150';
+            const chs = encodeURIComponent(url);
+            return `https://chart.googleapis.com/chart?cht=qr&chs=${size}&chl=${chs}&chld=L|1`;
+        }
+
+        // 函式：顯示 Toast 提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'show';
+            setTimeout(function(){ 
+                toast.className = toast.className.replace('show', ''); 
+            }, 3000); // 顯示 3 秒
+        }
+
+        // 字符串轉二進位
+        function stringToBinary(str) {
+            return str.split('').map(char => {
+                return char.charCodeAt(0).toString(2).padStart(8, '0');
+            }).join('');
+        }
+
+        // 二進位轉字串
+        function binaryToString(binary) {
+            const chunks = binary.match(/.{8}/g) || [];
+            return chunks.map(chunk => {
+                return String.fromCharCode(parseInt(chunk, 2));
+            }).join('');
+        }
+
+        // 二進位轉 i/I 編碼
+        function binaryToiI(binary) {
+            return binary.split('').map(bit => bit === '0' ? 'i' : 'I').join('');
+        }
+
+        // i/I 編碼轉二進位
+        function iIToBinary(iIString) {
+            return iIString.split('').map(char => char === 'i' ? '0' : '1').join('');
+        }
+
+        // 數字轉二進位（固定長度）
+        function numberToBinary(num, length = 32) {
+            return num.toString(2).padStart(length, '0');
+        }
+
+        // 二進位轉數字
+        function binaryToNumber(binary) {
+            return parseInt(binary, 2);
+        }
+
+        // 編碼 URL 和時間戳（永久連結）
+        function encodeUrlWithTimestamp(url, days) {
+            const now = Date.now();
+            
+            // 將數據打包（永久連結）
+            const data = {
+                url: url,
+                created: now,
+                expires: null,
+                permanent: true
+            };
+            
+            const jsonData = JSON.stringify(data);
+            
+            // 轉換為二進位
+            const binary = stringToBinary(jsonData);
+            
+            // 轉換為 i/I 編碼
+            const encoded = binaryToiI(binary);
+            
+            return {
+                encoded: encoded,
+                data: data
+            };
+        }
+
+        // 解碼 i/I 字串
+        function decodeFromiI(iIString) {
+            try {
+                // 轉換為二進位
+                const binary = iIToBinary(iIString);
+                
+                // 轉換為字串
+                const jsonString = binaryToString(binary);
+                
+                // 解析 JSON
+                const data = JSON.parse(jsonString);
+                
+                return data;
+            } catch (error) {
+                console.error('解碼失敗:', error);
+                return null;
+            }
+        }
+
+        // 生成路徑分段（保持 URL 長度最大化）
+        function generateSegmentedPath(encoded) {
+            const segments = [];
+            const maxSegmentLength = 255; // URL 段最大長度
+            
+            for (let i = 0; i < encoded.length; i += maxSegmentLength) {
+                segments.push(encoded.substr(i, maxSegmentLength));
+            }
+            
+            return segments.join('/');
+        }
+
+        // 從分段路徑中提取編碼
+        function extractEncodedFromPath(path) {
+            return path.replace(/\//g, '');
+        }
+
+        // 表單提交處理
+        document.getElementById('linkForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('url').value;
+            const days = parseInt(document.getElementById('days').value);
+            
+            if (!url) {
+                showError('請輸入有效的 URL');
+                return;
+            }
+            
+            try {
+                // 1. 編碼 URL
+                const result = encodeUrlWithTimestamp(url, days);
+                
+                // 2. 生成分段路徑
+                const segmentedPath = generateSegmentedPath(result.encoded);
+                
+                // 3. 建構完整 URL
+                const domain = 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.in';
+                const longUrl = `https://${domain}/${segmentedPath}`;
+                
+                // 4. 生成 QR Code
+                const qrCodeSrc = generateQrCode(longUrl);
+                document.getElementById('qrCodeImage').src = qrCodeSrc;
+                
+                // 5. 顯示結果
+                document.getElementById('targetUrl').textContent = url;
+                document.getElementById('longUrl').textContent = longUrl;
+                document.getElementById('linkStats').innerHTML = `
+                    <p>📅 建立時間: ${new Date(result.data.created).toLocaleString()}</p>
+                    <p>⏰ 失效時間: 永久有效</p>
+                    <p>🔗 連結長度: ${longUrl.length} 字元</p>
+                    <p>📊 編碼長度: ${result.encoded.length} 字元</p>
+                    <p>💾 原始數據: ${JSON.stringify(result.data).length} 位元組</p>
+                `;
+                
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                
+                // 儲存目前 URL 用於複製
+                window.currentLongUrl = longUrl;
+                
+            } catch (error) {
+                showError('編碼失敗: ' + error.message);
+            }
+        });
+
+        // 解碼長連結
+        function decodeLongUrl() {
+            const input = document.getElementById('decodeUrl').value.trim();
+            
+            if (!input) {
+                showToast('請輸入要解碼的長連結'); // 使用 Toast
+                return;
+            }
+            
+            try {
+                // 提取路徑部分
+                const url = new URL(input);
+                const path = url.pathname.substring(1); // 移除開頭的 /
+                
+                if (!path) {
+                    showToast('無效的 URL 路徑'); // 使用 Toast
+                    return;
+                }
+                
+                // 提取編碼
+                const encoded = extractEncodedFromPath(path);
+                
+                // 解碼
+                const decoded = decodeFromiI(encoded);
+                
+                if (!decoded) {
+                    showToast('解碼失敗，可能是無效的編碼'); // 使用 Toast
+                    return;
+                }
+                
+                // 顯示結果（永久連結）
+                document.getElementById('decodedUrl').textContent = decoded.url;
+                document.getElementById('decodedCreated').textContent = new Date(decoded.created).toLocaleString();
+                document.getElementById('decodedExpires').textContent = '永久有效';
+                document.getElementById('decodedStatus').textContent = '有效';
+                document.getElementById('decodedStatus').style.color = 'green';
+                
+                // 設定重定向按鈕
+                currentDecodedUrl = decoded.url;
+                document.getElementById('redirectBtn').style.display = 'inline-block';
+                
+                document.getElementById('decodeResult').style.display = 'block';
+                
+            } catch (error) {
+                showToast('解碼失敗: ' + error.message); // 使用 Toast
+                console.error('解碼錯誤:', error);
+            }
+        }
+
+        // 重定向到目標 URL
+        function redirectToTarget() {
+            if (currentDecodedUrl) {
+                window.open(currentDecodedUrl, '_blank');
+            }
+        }
+
+        // 複製到剪貼簿 (使用 Toast 提示)
+        function copyToClipboard() {
+            if (window.currentLongUrl) {
+                navigator.clipboard.writeText(window.currentLongUrl).then(function() {
+                    showToast('長連結已複製！');
+                }).catch(function() {
+                    // 降級方案
+                    const textArea = document.createElement('textarea');
+                    textArea.value = window.currentLongUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast('長連結已複製！ (降級模式)');
+                });
+            }
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // 頁面載入時的自動解碼和跳轉功能
+        window.addEventListener('load', function() {
+            const currentUrl = window.location.href;
+            const urlPath = window.location.pathname;
+            
+            // 如果目前頁面 URL 包含編碼路徑，自動解碼並跳轉
+            if (urlPath && urlPath !== '/' && urlPath.length > 10) {
+                try {
+                    // 提取路徑部分
+                    const path = urlPath.substring(1); // 移除開頭的 /
+                    
+                    // 提取編碼
+                    const encoded = extractEncodedFromPath(path);
+                    
+                    // 解碼
+                    const decoded = decodeFromiI(encoded);
+                    
+                    if (decoded && decoded.url) {
+                        // 永久連結，直接跳轉
+                        window.location.href = decoded.url;
+                        return;
+                    }
+                } catch (error) {
+                    // 解碼失敗，顯示 404 頁面
+                    document.body.innerHTML = `
+                        <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+                            <h1>❌ 連結無效</h1>
+                            <p>抱歉，您造訪的連結無效或已損壞。</p>
+                            <button onclick="window.location.href='/'" style="padding: 10px 20px; margin-top: 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">生成新連結</button>
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
