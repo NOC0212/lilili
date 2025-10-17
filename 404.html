@@ -6,14 +6,14 @@
     <title>🔗 二進位編碼長連結生成器</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://chart.googleapis.com; font-src 'self'; connect-src 'self' https://chart.googleapis.com; object-src 'none'; media-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self';">
     <style>
-        /* CSS 樣式定義 (保持不變) */
+        /* CSS 樣式定義 */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
             max-width: 800px; 
             margin: 0 auto; 
             padding: 20px; 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            min-height: 10vh;
             color: #333;
         }
         .container {
@@ -252,9 +252,9 @@
         <div class="info">
             <h3>ℹ️ 編碼原理</h3>
             <ul>
-                <li><strong>i = 0，I = 1</strong> 用於二進位編碼，將目標網址資訊直接儲存在 URL 路徑中。</li>
-                <li>**關鍵修正：** 程式碼現已強制使用 **UTF-8** 編碼/解碼，解決了亂碼導致的跳轉失敗問題。</li>
-                <li>**部署提示：** 請將此檔案命名為 **`404.html`**，以確保 GitHub Pages 能將所有長連結請求重定向到此頁面進行跳轉。</li>
+                <li>**i = 0，I = 1** 用於二進位編碼。</li>
+                <li>**已修正：** 使用 TextEncoder/Decoder 確保 UTF-8 編碼一致性，解決亂碼問題。</li>
+                <li>**部署：** 請將此檔案同時用於 **`index.html`** (生成頁面) 和 **`404.html`** (跳轉中繼頁面)。</li>
             </ul>
         </div>
     </div>
@@ -361,7 +361,7 @@
             try {
                 const binary = iIToBinary(iIString);
                 const jsonString = binaryToString(binary);
-                const data = JSON.parse(jsonString); // 這裡之前因為編碼錯誤而失敗
+                const data = JSON.parse(jsonString); 
                 return data;
             } catch (error) {
                 console.error('解碼失敗 (JSON/編碼錯誤):', error);
@@ -386,6 +386,83 @@
             // 移除路徑開頭的 / ，並移除所有路徑分隔符 /
             return path.substring(1).replace(/\//g, '');
         }
+        
+        // 顯示錯誤
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // *** 修正後的複製到剪貼簿函式 ***
+        function copyToClipboard() {
+            if (window.currentLongUrl) {
+                navigator.clipboard.writeText(window.currentLongUrl).then(function() {
+                    showToast('✅ 長連結已複製！');
+                }).catch(function() {
+                    // 降級方案
+                    const textArea = document.createElement('textarea');
+                    textArea.value = window.currentLongUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast('✅ 長連結已複製！');
+                });
+            }
+        }
+        
+        // 重定向到目標 URL
+        function redirectToTarget() {
+            if (currentDecodedUrl) {
+                window.open(currentDecodedUrl, '_blank');
+            }
+        }
+
+        // 解碼長連結 (手動解碼)
+        function decodeLongUrl() {
+            const input = document.getElementById('decodeUrl').value.trim();
+            
+            if (!input) {
+                showToast('請輸入要解碼的長連結');
+                return;
+            }
+            
+            try {
+                const url = new URL(input);
+                const path = url.pathname;
+                
+                if (!path) {
+                    showToast('無效的 URL 路徑');
+                    return;
+                }
+                
+                const encoded = extractEncodedFromPath(path);
+                const decoded = decodeFromiI(encoded);
+                
+                if (!decoded) {
+                    showToast('解碼失敗，可能是無效的編碼');
+                    return;
+                }
+                
+                // 顯示結果
+                document.getElementById('decodedUrl').textContent = decoded.url;
+                document.getElementById('decodedCreated').textContent = new Date(decoded.created).toLocaleString();
+                document.getElementById('decodedExpires').textContent = '永久有效';
+                document.getElementById('decodedStatus').textContent = '有效';
+                document.getElementById('decodedStatus').style.color = 'green';
+                
+                currentDecodedUrl = decoded.url;
+                document.getElementById('redirectBtn').style.display = 'inline-block';
+                
+                document.getElementById('decodeResult').style.display = 'block';
+                
+            } catch (error) {
+                showToast('解碼失敗: 請確保輸入的是一個完整的長連結');
+                console.error('解碼錯誤:', error);
+            }
+        }
+
 
         // 表單提交處理 (用於生成連結)
         document.getElementById('linkForm').addEventListener('submit', function(e) {
@@ -443,34 +520,27 @@
             }
         });
 
-        // (解碼長連結、redirectToTarget、copyToClipboard 函式保持不變)
-        function decodeLongUrl() { /* ... (請從上一個完整程式碼複製貼上) ... */ }
-        function redirectToTarget() { /* ... (請從上一個完整程式碼複製貼上) ... */ }
-        function copyToClipboard() { /* ... (請從上一個完整程式碼複製貼上) ... */ }
-        function showError(message) { /* ... (請從上一個完整程式碼複製貼上) ... */ }
-
-
-        // 頁面載入時的自動解碼和跳轉功能 (現在應該能正常解碼了)
+        // 頁面載入時的自動解碼和跳轉功能 (使用 404.html 作為中繼)
         window.addEventListener('load', function() {
             const urlPath = window.location.pathname;
             
-            // 只有當路徑很長，且不是根頁面時才嘗試解碼 (404.html 會包含路徑)
+            // 只有當路徑很長，且不是根頁面時才嘗試解碼
             if (urlPath && urlPath.length > 20 && urlPath !== '/' && !urlPath.endsWith('.html') && !urlPath.endsWith('.htm')) {
                 try {
                     const encoded = extractEncodedFromPath(urlPath);
-                    console.log("嘗試解碼編碼字串:", encoded.substring(0, 50) + "..."); // 偵錯用
+                    console.log("嘗試解碼編碼字串:", encoded.substring(0, 50) + "..."); 
                     
                     const decoded = decodeFromiI(encoded);
                     
                     if (decoded && decoded.url) {
-                        console.log("解碼成功，目標 URL:", decoded.url); // 偵錯用
+                        console.log("解碼成功，目標 URL:", decoded.url); 
                         // 永久連結，直接跳轉
                         window.location.replace(decoded.url); 
                         return;
                     }
                 } catch (error) {
-                    console.error("自動跳轉失敗:", error); // 偵錯用
-                    // 只有在 404 頁面才顯示錯誤，在首頁不應該跳轉
+                    console.error("自動跳轉失敗:", error); 
+                    // 顯示錯誤頁面 (如果是在 404.html 中發生錯誤)
                     if (window.location.href.includes('404.html')) {
                          document.body.innerHTML = `
                             <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
